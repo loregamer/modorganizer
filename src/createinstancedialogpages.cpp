@@ -757,7 +757,9 @@ bool VariantsPage::doSkip() const
     return true;
   }
 
-  return (g->gameVariants().size() < 2);
+  // Always show the variants page to provide the "Other" option
+  // even for games with no variants or only 1 variant
+  return false;
 }
 
 void VariantsPage::doActivated(bool)
@@ -799,11 +801,7 @@ QString VariantsPage::selectedGameVariant(MOBase::IPluginGame* game) const
     return {};
   }
 
-  if (game->gameVariants().size() < 2) {
-    return {};
-  } else {
-    return m_selection;
-  }
+  return m_selection;
 }
 
 void VariantsPage::fillList()
@@ -829,6 +827,18 @@ void VariantsPage::fillList()
     ui->editions->addButton(b, QDialogButtonBox::AcceptRole);
     m_buttons.push_back(b);
   }
+
+  // Add "Other" option for users who don't own the game on supported platforms
+  auto* otherButton = new QCommandLinkButton(tr("Other"));
+  otherButton->setCheckable(true);
+  otherButton->setDescription(tr("For users who don't own the game on Steam, GOG, or Epic - launches without file checking"));
+
+  QObject::connect(otherButton, &QAbstractButton::clicked, [this] {
+    select(tr("Other"));
+  });
+
+  ui->editions->addButton(otherButton, QDialogButtonBox::AcceptRole);
+  m_buttons.push_back(otherButton);
 
   if (!m_buttons.empty()) {
     m_buttons[0]->setDefault(true);
